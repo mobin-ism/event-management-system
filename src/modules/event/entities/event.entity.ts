@@ -33,8 +33,9 @@ export class Event extends CustomBaseEntity {
 
     @Column({
         type: 'int',
+        unsigned: true,
         nullable: false,
-        default: 0
+        default: 1
     })
     maxAttendees: number
 }

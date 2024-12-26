@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger'
 import {
     IsDateString,
+    IsInt,
     IsNotEmpty,
-    IsNumber,
     IsOptional,
-    IsString
+    IsString,
+    Min
 } from 'class-validator'
 
 export class CreateEventDto {
@@ -34,7 +35,15 @@ export class CreateEventDto {
     location: string
 
     @ApiProperty()
-    @IsNotEmpty()
-    @IsNumber()
+    @IsNotEmpty({
+        message:
+            'Max Attendees is required and must be a positive integer greater than 0.'
+    })
+    @IsInt({
+        message: 'Max Attendees must be a positive integer greater than 0.'
+    })
+    @Min(1, {
+        message: 'Max Attendees must be a positive integer greater than 0.'
+    })
     maxAttendees: number
 }
