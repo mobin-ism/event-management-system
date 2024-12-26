@@ -1,0 +1,45 @@
+name: euclido
+services:
+    postgres:
+        container_name: postgres-container
+        image: postgres
+        restart: always
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=pLSkczmWBHK0CVh
+            - POSTGRES_DB=e-commerce-api
+        ports:
+            - '5432:5432'
+        volumes:
+            - /home/ubuntu/pg-data:/var/lib/postgresql/data/:rw
+            - ./sql/prod-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    e-coomerce-api:
+        container_name: e-coomerce-api
+        ports:
+            - 3000:3000
+        restart: always
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+            target: production
+        image: e-coomerce-api
+        environment:
+            - APP_ENV=development
+            - APP_PORT=3000
+            - APP_URL=http://localhost:3000
+
+            # DEVELOPMENT ENVIRONMENT
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_USERNAME=postgres
+            - DB_PASSWORD=pLSkczmWBHK0CVh
+            - DB_NAME=e-commerce-api
+
+            #MISC
+            - DEFAULT_PAGE_SIZE=25
+            - RATE_LIMITER_TIME_TO_LEAVE=6000 #MILLISECONDS
+            - RATE_LIMITER_MAX_TRY=60
+        user: 'appuser:appgroup' # Explicitly set the user
+        depends_on:
+            - postgres
