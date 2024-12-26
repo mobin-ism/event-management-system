@@ -76,6 +76,7 @@ export class EventService {
         const event = await this.findOne(id)
         try {
             await this.eventRepository.update(event.id, updateEventDto)
+            return await this.findOne(id)
         } catch (error) {
             this.logger.error(error.message)
             if (error.code === '23505') {

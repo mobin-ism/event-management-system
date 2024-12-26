@@ -1,8 +1,9 @@
 import { CustomBaseEntity } from 'src/common/entity/custom-base.entity'
-import { Column, Entity, Unique } from 'typeorm'
+import { Column, Entity, Index, Unique } from 'typeorm'
 
 @Entity()
 @Unique(['location', 'date'])
+@Index(['location', 'date'])
 export class Event extends CustomBaseEntity {
     @Column({
         type: 'varchar',
@@ -17,7 +18,10 @@ export class Event extends CustomBaseEntity {
     })
     description: string
 
-    @Column({ type: 'timestamptz' }) // Recommended
+    @Column({
+        type: 'date', // This stores date only, without time
+        nullable: false
+    })
     date: Date
 
     @Column({
