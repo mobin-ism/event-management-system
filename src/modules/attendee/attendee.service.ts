@@ -112,7 +112,7 @@ export class AttendeeService {
     async remove(id: string) {
         const attendee = await this.findOne(id)
         try {
-            await this.attendeeRepository.softDelete(attendee.id)
+            await this.attendeeRepository.delete(attendee.id)
             return attendee
         } catch (error) {
             this.logger.error(error.message)
