@@ -6,9 +6,10 @@ import {
     HttpStatus,
     Param,
     Patch,
-    Post
+    Post,
+    Query
 } from '@nestjs/common'
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { AttendeeService } from './attendee.service'
 import { CreateAttendeeDto } from './dto/create-attendee.dto'
 import { UpdateAttendeeDto } from './dto/update-attendee.dto'
@@ -38,13 +39,27 @@ export class AttendeeController {
     }
 
     @Get()
-    @ApiOperation({ summary: 'Get all attendees' })
+    @ApiQuery({
+        name: 'name',
+        required: false,
+        type: String,
+        description: 'Search attendees by name',
+        example: 'John Doe'
+    })
+    @ApiQuery({
+        name: 'email',
+        required: false,
+        type: String,
+        description: 'Search attendees by email',
+        example: 'john@example.com'
+    })
+    @ApiOperation({ summary: 'Search attendees' })
     @ApiResponse({ description: 'Attendees found', status: HttpStatus.OK })
-    async findAll() {
+    async search(@Query('name') name: string, @Query('email') email: string) {
         return {
             statusCode: HttpStatus.OK,
             message: 'List of attendees',
-            result: await this.attendeeService.findAll()
+            result: await this.attendeeService.searchAttendees(name, email)
         }
     }
 

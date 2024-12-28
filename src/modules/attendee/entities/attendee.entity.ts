@@ -3,7 +3,7 @@ import { Registration } from 'src/modules/registration/entities/registration.ent
 import { Column, Entity, Index, OneToMany } from 'typeorm'
 
 @Entity()
-@Index(['email'])
+@Index(['name', 'email'])
 export class Attendee extends CustomBaseEntity {
     @Column({
         type: 'varchar',

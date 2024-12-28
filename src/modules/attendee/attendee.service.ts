@@ -6,7 +6,7 @@ import {
     NotFoundException
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { ILike, Repository } from 'typeorm'
 import { CreateAttendeeDto } from './dto/create-attendee.dto'
 import { UpdateAttendeeDto } from './dto/update-attendee.dto'
 import { Attendee } from './entities/attendee.entity'
@@ -45,6 +45,25 @@ export class AttendeeService {
      */
     async findAll() {
         return await this.attendeeRepository.find()
+    }
+
+    /**
+     * Search attendees by name or email using ILike
+     */
+    async searchAttendees(name?: string, email?: string) {
+        const whereClause = {}
+        if (name) {
+            whereClause['name'] = ILike(`%${name}%`)
+        }
+        if (email) {
+            whereClause['email'] = ILike(`%${email}%`)
+        }
+        return await this.attendeeRepository.find({
+            where: [whereClause],
+            order: {
+                name: 'ASC'
+            }
+        })
     }
 
     /**
