@@ -53,7 +53,7 @@ export class AttendeeController {
         description: 'Search attendees by email',
         example: 'john@example.com'
     })
-    @ApiOperation({ summary: 'Search attendees' })
+    @ApiOperation({ summary: 'Get all attendees with filter' })
     @ApiResponse({ description: 'Attendees found', status: HttpStatus.OK })
     async search(@Query('name') name: string, @Query('email') email: string) {
         return {
