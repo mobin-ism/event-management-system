@@ -6,7 +6,7 @@ import {
     NotFoundException
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Between, Repository } from 'typeorm'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { Event } from './entities/event.entity'
@@ -113,5 +113,16 @@ export class EventService {
     async isEventFull(eventId: string) {
         const event = await this.findOne(eventId)
         return event.eventAttendees.length >= event.maxAttendees
+    }
+
+    /**
+     * FINDING ALL THE EVENT BY DATE RANGE
+     */
+    async findEventByDateRange(from: Date, to: Date) {
+        return await this.eventRepository.find({
+            where: {
+                date: Between(from, to)
+            }
+        })
     }
 }

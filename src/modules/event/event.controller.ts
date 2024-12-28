@@ -6,9 +6,10 @@ import {
     HttpStatus,
     Param,
     Patch,
-    Post
+    Post,
+    Query
 } from '@nestjs/common'
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { EventService } from './event.service'
@@ -45,6 +46,34 @@ export class EventController {
             statusCode: HttpStatus.OK,
             message: 'List of events',
             result: await this.eventService.findAll()
+        }
+    }
+
+    @Get('date-range')
+    @ApiQuery({
+        name: 'from',
+        required: true,
+        type: Date,
+        description: 'From date',
+        example: '2021-12-31'
+    })
+    @ApiQuery({
+        name: 'to',
+        required: true,
+        type: Date,
+        description: 'To date',
+        example: '2021-12-01'
+    })
+    @ApiOperation({ summary: 'Get all events by date range' })
+    @ApiResponse({ description: 'Events found', status: HttpStatus.OK })
+    async findAllEventByDateRange(
+        @Query('from') from: Date,
+        @Query('to') to: Date
+    ) {
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'List of events',
+            result: await this.eventService.findEventByDateRange(from, to)
         }
     }
 
