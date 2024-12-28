@@ -55,14 +55,14 @@ export class EventController {
         required: true,
         type: Date,
         description: 'From date',
-        example: '2021-12-31'
+        example: '2024-12-1'
     })
     @ApiQuery({
         name: 'to',
         required: true,
         type: Date,
         description: 'To date',
-        example: '2021-12-01'
+        example: '2024-12-31'
     })
     @ApiOperation({ summary: 'Get all events by date range' })
     @ApiResponse({ description: 'Events found', status: HttpStatus.OK })
