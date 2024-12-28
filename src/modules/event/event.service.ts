@@ -56,7 +56,10 @@ export class EventService {
      */
     async findOne(id: string) {
         const event = await this.eventRepository.findOne({
-            where: { id }
+            where: { id },
+            relations: {
+                eventAttendees: true
+            }
         })
 
         if (!event) {
@@ -102,5 +105,13 @@ export class EventService {
             this.logger.error(error.message)
             throw new BadRequestException(error.message)
         }
+    }
+
+    /**
+     * CHECK IF THE EVENT IS FULL
+     */
+    async isEventFull(eventId: string) {
+        const event = await this.findOne(eventId)
+        return event.eventAttendees.length >= event.maxAttendees
     }
 }

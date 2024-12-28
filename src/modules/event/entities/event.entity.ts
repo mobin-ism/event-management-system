@@ -1,5 +1,6 @@
 import { CustomBaseEntity } from 'src/common/entity/custom-base.entity'
-import { Column, Entity, Index, Unique } from 'typeorm'
+import { Registration } from 'src/modules/registration/entities/registration.entity'
+import { Column, Entity, Index, OneToMany, Unique } from 'typeorm'
 
 @Entity()
 @Unique(['location', 'date'])
@@ -38,4 +39,9 @@ export class Event extends CustomBaseEntity {
         default: 1
     })
     maxAttendees: number
+
+    @OneToMany(() => Registration, (registration) => registration.event, {
+        cascade: true
+    })
+    eventAttendees: Registration[]
 }

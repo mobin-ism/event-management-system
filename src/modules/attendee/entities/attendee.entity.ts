@@ -1,5 +1,6 @@
 import { CustomBaseEntity } from 'src/common/entity/custom-base.entity'
-import { Column, Entity, Index } from 'typeorm'
+import { Registration } from 'src/modules/registration/entities/registration.entity'
+import { Column, Entity, Index, OneToMany } from 'typeorm'
 
 @Entity()
 @Index(['email'])
@@ -18,4 +19,9 @@ export class Attendee extends CustomBaseEntity {
         unique: true
     })
     email: string
+
+    @OneToMany(() => Registration, (registration) => registration.attendee, {
+        cascade: true
+    })
+    eventAttendees: Registration[]
 }

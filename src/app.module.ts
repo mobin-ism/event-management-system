@@ -4,8 +4,9 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { typeOrmAsyncConfig } from 'src/config/typeorm.config'
+import { AttendeeModule } from './modules/attendee/attendee.module'
 import { EventModule } from './modules/event/event.module'
-import { AttendeeModule } from './modules/attendee/attendee.module';
+import { RegistrationModule } from './modules/registration/registration.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -31,7 +32,8 @@ import { AttendeeModule } from './modules/attendee/attendee.module';
         TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
         ScheduleModule.forRoot(),
         EventModule,
-        AttendeeModule
+        AttendeeModule,
+        RegistrationModule
     ],
     exports: [TypeOrmModule]
 })
