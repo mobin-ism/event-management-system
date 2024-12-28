@@ -6,6 +6,7 @@ import {
     NotFoundException
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { isArray } from 'class-validator'
 import { Between, Repository } from 'typeorm'
 import { CacheService } from '../cache/cache.service'
 import { CreateEventDto } from './dto/create-event.dto'
@@ -17,7 +18,7 @@ export class EventService {
     private logger = new Logger(EventService.name)
     private readonly CACHE_KEY = 'events'
     private readonly CACHE_PREFIX = 'event:'
-    private readonly CACHE_TTL = 3600 // 1 hour in seconds
+    private readonly CACHE_TTL = parseInt(process.env.TTL) // 1 hour in seconds
 
     /**
      * Constructor
@@ -93,7 +94,7 @@ export class EventService {
             `${this.CACHE_PREFIX}${id}`
         )
         if (cachedEvent) {
-            return cachedEvent
+            return isArray(cachedEvent) ? cachedEvent[0] : cachedEvent
         }
 
         const event = await this.eventRepository.findOne({
@@ -169,6 +170,7 @@ export class EventService {
                 this.CACHE_KEY,
                 event.id
             )
+            // Remove the event from the cache
             this.cacheService.delete(`${this.CACHE_PREFIX}${id}`)
             return event
         } catch (error) {
