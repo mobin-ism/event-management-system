@@ -1,9 +1,10 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cache } from 'cache-manager'
 
 @Injectable()
 export class CacheService {
+    private readonly logger = new Logger(CacheService.name)
     constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
     // Get list with key
@@ -43,9 +44,13 @@ export class CacheService {
 
     // Add item to list
     async addItemToList<T>(listKey: string, newItem: T): Promise<void> {
-        const list = await this.getList<T>(listKey)
-        list.push(newItem)
-        await this.setList(listKey, list)
+        try {
+            const list = await this.getList<T>(listKey)
+            list.push(newItem)
+            await this.setList(listKey, list)
+        } catch (error) {
+            this.logger.log('Error adding item to list')
+        }
     }
 
     // Remove item from list

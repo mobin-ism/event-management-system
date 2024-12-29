@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AttendeeModule } from '../attendee/attendee.module'
 import { CacheService } from '../cache/cache.service'
@@ -10,6 +11,7 @@ import { RegistrationService } from './registration.service'
 
 @Module({
     imports: [
+        EventEmitterModule.forRoot(),
         TypeOrmModule.forFeature([Registration]),
         EventModule,
         AttendeeModule

@@ -1,4 +1,5 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { InjectRepository } from '@nestjs/typeorm'
 import { isArray } from 'class-validator'
 import { Repository } from 'typeorm'
@@ -16,7 +17,8 @@ export class RegistrationService {
         private registrationRepository: Repository<Registration>,
         private readonly eventService: EventService,
         private readonly attendeeService: AttendeeService,
-        private readonly registrationCacheService: RegistrationCacheService
+        private readonly registrationCacheService: RegistrationCacheService,
+        private eventEmitter: EventEmitter2
     ) {}
 
     /**
@@ -53,12 +55,15 @@ export class RegistrationService {
             registration.registeredAt = new Date()
             const createdRegistration =
                 await this.registrationRepository.save(registration)
-
             // Add the created registraion to the cache
             this.registrationCacheService.create(createdRegistration)
             // Update the event cache to the attendee and add the attendee to the event
             this.eventService.updateEventAttendees(eventId)
             this.attendeeService.updateAttendeesInEvent(attendeeId)
+            this.eventEmitter.emit(
+                'registration-confirmation',
+                createdRegistration
+            )
             return createdRegistration
         } catch (error) {
             throw new HttpException(error.message, 400)
