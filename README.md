@@ -236,7 +236,7 @@ Go to [http://localhost:3000/docs/](http://localhost:3000/docs/)
 
 In addition to the RESTful API, the system supports real-time notifications through WebSockets, providing instant updates to clients. The base URL for the WebSocket connection is:
 
-- **Base URL**: `ws://localhost:3000`
+- **Base URL**: `http://localhost:3000`
 
 The server publishes the following events:
 
