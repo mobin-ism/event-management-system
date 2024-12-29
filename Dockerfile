@@ -29,6 +29,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copy built assets from builder stage
 COPY --from=builder --chown=appuser:appgroup /usr/src/app/dist ./dist
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/dist ./dist
 COPY --from=builder --chown=appuser:appgroup /usr/src/app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appgroup /usr/src/app/package*.json ./
 
