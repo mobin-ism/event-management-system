@@ -5,6 +5,8 @@ import {
     Logger,
     NotFoundException
 } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
+import { Cron, CronExpression } from '@nestjs/schedule'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Between, Repository } from 'typeorm'
 import { CreateEventDto } from './dto/create-event.dto'
@@ -25,7 +27,8 @@ export class EventService {
         // Inject the EventRepository
         @InjectRepository(Event)
         private readonly eventRepository: Repository<Event>,
-        private readonly eventCacheService: EventCacheService
+        private readonly eventCacheService: EventCacheService,
+        private readonly eventEmitter: EventEmitter2
     ) {}
 
     /**
@@ -194,5 +197,42 @@ export class EventService {
             }
         })
         this.eventCacheService.update(event)
+    }
+
+    /**
+     * Send reminder before 24 hours
+     */
+    @Cron(CronExpression.EVERY_DAY_AT_10AM)
+    async sendReminder() {
+        const today = new Date()
+        // Get the next date as a Date object
+        const nextDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() + 1
+        )
+
+        const events = await this.eventRepository.find({
+            where: { date: nextDate },
+            relations: {
+                eventAttendees: {
+                    attendee: true
+                }
+            }
+        })
+
+        const reminders = []
+        for (const event of events) {
+            for (const attendee of event.eventAttendees) {
+                reminders.push({
+                    username: attendee.attendee.name,
+                    useremail: attendee.attendee.email,
+                    emailBody: `Hello ${attendee.attendee.name}, your event ${event.name} is tomorrow.`
+                })
+            }
+        }
+
+        // Send the reminders
+        this.eventEmitter.emit('event-reminder', reminders)
     }
 }

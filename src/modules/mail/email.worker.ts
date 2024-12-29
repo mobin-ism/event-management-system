@@ -1,3 +1,4 @@
+import { isArray } from 'class-validator'
 import * as fs from 'fs/promises'
 import * as handlebars from 'handlebars'
 import { createTransport, Transporter } from 'nodemailer'
@@ -32,12 +33,11 @@ class EmailWorker {
             // Get and compile template
             const template = await this.getTemplate(templateName)
             const html = template(data)
-
             // Send email
             const result = await this.transporter.sendMail({
                 from: process.env.SMTP_MAIL_FROM,
                 to: data.useremail,
-                subject: 'Registration Confirmation',
+                subject: this.getSubject(templateName),
                 html
             })
 
@@ -49,7 +49,8 @@ class EmailWorker {
 
     private getSubject(templateName: string): string {
         const subjects = {
-            'registration-confirmation': 'Welcome to Our Platform'
+            'registration-confirmation': 'Registration Confirmation',
+            'event-reminder': 'Event Reminder'
         }
         return subjects[templateName] || 'New Message'
     }
@@ -60,8 +61,15 @@ async function processEmailInWorker() {
     const emailWorker = new EmailWorker()
 
     try {
-        const result = await emailWorker.sendEmail(template, data)
-        parentPort.postMessage(result)
+        if (isArray(data)) {
+            for (const item of data) {
+                const result = await emailWorker.sendEmail(template, item)
+                parentPort.postMessage(result)
+            }
+        } else {
+            const result = await emailWorker.sendEmail(template, data)
+            parentPort.postMessage(result)
+        }
     } catch (error) {
         parentPort.postMessage({
             success: false,
