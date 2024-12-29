@@ -51,6 +51,21 @@ export class WebsocketGateway {
             this.logger.log('Client not found')
         }
     }
+    /**
+     * This method is called when the server receives a response from a client.
+     * @param data
+     * @param client
+     */
+    handleSeatAvailabilityNotification(@MessageBody() data) {
+        this.logger.log(`Notification response: ${JSON.stringify(data)}`)
+        const clientId = data.client_id
+        const targetClient = this.clients.get(clientId)
+        if (targetClient) {
+            targetClient.emit('event-availability', data)
+        } else {
+            this.logger.log('Client not found')
+        }
+    }
 
     /**
      * This method is called when a client disconnects from the server.
