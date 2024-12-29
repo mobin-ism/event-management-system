@@ -134,7 +134,7 @@ event-management-system/
 
 ---
 
-### Local Deployment
+### 💻 Local Deployment
 
 1. **Install prerequisites**:
 
