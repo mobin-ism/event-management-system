@@ -43,15 +43,13 @@ export class AttendeeController {
         name: 'name',
         required: false,
         type: String,
-        description: 'Search attendees by name',
-        example: 'John Doe'
+        description: 'Search attendees by name'
     })
     @ApiQuery({
         name: 'email',
         required: false,
         type: String,
-        description: 'Search attendees by email',
-        example: 'john@example.com'
+        description: 'Search attendees by email'
     })
     @ApiOperation({ summary: 'Get all attendees with filter' })
     @ApiResponse({ description: 'Attendees found', status: HttpStatus.OK })
