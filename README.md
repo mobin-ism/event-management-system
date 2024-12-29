@@ -130,7 +130,7 @@ event-management-system/
     ```
 
 5. **Access the API Documentation**:
-    - **API**: [http://localhost:3000/docs](http://localhost:3000/docs)
+    - **API**: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
 ---
 
@@ -160,7 +160,7 @@ event-management-system/
     ```
 
 5. **Access the API Documentation**:
-    - **API Documentation**: [http://localhost:3000/docs](http://localhost:3000/docs)
+    - **API Documentation**: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
 ---
 
@@ -204,7 +204,7 @@ RATE_LIMITER_MAX_TRY=60
 ## API Endpoints
 
 You can see the API documentation in Swagger, If you follow the local deployment.
-Go to [http://localhost:3000/docs/](http://localhost:3000/docs/)
+Go to [http://localhost:3000/api-docs/](http://localhost:3000/api-docs/)
 
 ### Event Mangement API
 
