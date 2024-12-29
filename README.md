@@ -232,6 +232,21 @@ Go to [http://localhost:3000/docs/](http://localhost:3000/docs/)
 
 ---
 
+### Real-Time Notifications (WebSocket)
+
+In addition to the RESTful API, the system supports real-time notifications through WebSockets, providing instant updates to clients. The base URL for the WebSocket connection is:
+
+- **Base URL**: `ws://localhost:3000`
+
+The server publishes the following events:
+
+- **new-event**: This event is triggered whenever a new event is created. Clients subscribed to this event will receive notifications with the latest event information.
+- **event-availability**: This event is triggered to notify attendees when an event is nearing capacity. Clients will be informed that the event space is limited and may be filled soon, allowing them to take action (e.g., register quickly).
+
+Clients should subscribe to these events in order to receive real-time updates during their session.
+
+---
+
 ## Database Schema
 
 ### **Event**
