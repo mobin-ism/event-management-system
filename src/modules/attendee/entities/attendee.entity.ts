@@ -23,5 +23,5 @@ export class Attendee extends CustomBaseEntity {
     @OneToMany(() => Registration, (registration) => registration.attendee, {
         cascade: true
     })
-    eventAttendees: Registration[]
+    registrations: Registration[]
 }

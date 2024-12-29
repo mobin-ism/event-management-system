@@ -28,7 +28,7 @@ export class RegistrationService {
         const { eventId, attendeeId } = createRegistrationDto
         const event = await this.eventService.findOne(eventId)
         const attendee = await this.attendeeService.findOne(attendeeId)
-        const isEventFull = await this.eventService.isEventFull(event.id)
+        const isEventFull = await this.eventService.isEventFull(eventId)
         const isDuplicateRegistration = await this.checkDuplicateRegistration(
             eventId,
             attendeeId
@@ -56,6 +56,9 @@ export class RegistrationService {
 
             // Add the created registraion to the cache
             this.registrationCacheService.create(createdRegistration)
+            // Update the event cache to the attendee and add the attendee to the event
+            this.eventService.updateEventAttendees(eventId)
+            this.attendeeService.updateAttendeesInEvent(attendeeId)
             return createdRegistration
         } catch (error) {
             throw new HttpException(error.message, 400)

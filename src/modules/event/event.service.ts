@@ -65,7 +65,9 @@ export class EventService {
         // If not in cache, get from database
         const events = await this.eventRepository.find({
             relations: {
-                eventAttendees: true
+                eventAttendees: {
+                    attendee: true
+                }
             }
         })
         // Set the events in the cache
@@ -87,7 +89,9 @@ export class EventService {
         const event = await this.eventRepository.findOne({
             where: { id },
             relations: {
-                eventAttendees: true
+                eventAttendees: {
+                    attendee: true
+                }
             }
         })
 
@@ -154,7 +158,10 @@ export class EventService {
      */
     async isEventFull(eventId: string) {
         const event = await this.findOne(eventId)
-        return event.eventAttendees.length >= event.maxAttendees
+        return (
+            event.eventAttendees &&
+            event.eventAttendees.length >= event.maxAttendees
+        )
     }
 
     /**
@@ -165,7 +172,27 @@ export class EventService {
         return await this.eventRepository.find({
             where: {
                 date: Between(from, to)
+            },
+            relations: {
+                eventAttendees: {
+                    attendee: true
+                }
             }
         })
+    }
+
+    /**
+     * Update event attendees in the cache
+     */
+    async updateEventAttendees(eventId: string) {
+        const event = await this.eventRepository.findOne({
+            where: { id: eventId },
+            relations: {
+                eventAttendees: {
+                    attendee: true
+                }
+            }
+        })
+        this.eventCacheService.update(event)
     }
 }

@@ -56,7 +56,7 @@ export class AttendeeService {
         }
         const attendees = await this.attendeeRepository.find({
             relations: {
-                eventAttendees: {
+                registrations: {
                     event: true
                 }
             }
@@ -96,7 +96,12 @@ export class AttendeeService {
 
         // If not in cache, get from database
         const attendee = await this.attendeeRepository.findOne({
-            where: { id }
+            where: { id },
+            relations: {
+                registrations: {
+                    event: true
+                }
+            }
         })
 
         if (!attendee) {
@@ -156,5 +161,22 @@ export class AttendeeService {
             this.logger.error(error.message)
             throw new BadRequestException('Bad Request')
         }
+    }
+
+    /**
+     * Update the details of an attendee with the events details in the cache
+     */
+    async updateAttendeesInEvent(attendeeId: string) {
+        // Get the attendee from the database
+        const attendee = await this.attendeeRepository.findOne({
+            where: { id: attendeeId },
+            relations: {
+                registrations: {
+                    event: true
+                }
+            }
+        })
+        // Update the attendee in the cache
+        this.attendeeCacheService.update(attendee)
     }
 }

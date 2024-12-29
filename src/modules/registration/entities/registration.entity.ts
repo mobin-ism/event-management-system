@@ -16,7 +16,7 @@ export class Registration extends CustomBaseEntity {
     @Column('uuid')
     attendeeId: string
 
-    @ManyToOne(() => Attendee, (attendee) => attendee.eventAttendees, {
+    @ManyToOne(() => Attendee, (attendee) => attendee.registrations, {
         onDelete: 'CASCADE'
     })
     attendee: Attendee
