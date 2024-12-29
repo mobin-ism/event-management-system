@@ -1,11 +1,16 @@
-# E Commerce API
+# Event Management System
 
-The E-Commerce API is a backend service built using NestJS and PostgreSQL to manage products, categories, and orders for an e-commerce platform. It provides endpoints for CRUD operations, order placement, and supports features like pagination, filtering, and search.
+The Event Management System is a backend-focused API designed to facilitate the management of events, attendees, and registrations. Built using NestJS and PostgreSQL, the system supports a wide range of features, including CRUD operations for events and attendees, registration management, and filtering functionalities.
+
+Advanced capabilities include caching frequently accessed data with Redis, background job handling with Worker Threads for email notifications, scheduled reminders using @nestjs/schedule, and real-time updates via WebSocket. The project emphasizes clean, modular, and maintainable code following NestJS best practices, complete with comprehensive API documentation through Swagger.
+
+This system is ideal for handling dynamic event scenarios while ensuring high performance and scalability.
 
 ---
 
 ## Table of Contents
 
+- [Features Covered](#features-covered)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup and Installation](#setup-and-installation)
@@ -17,20 +22,58 @@ The E-Commerce API is a backend service built using NestJS and PostgreSQL to man
 
 ---
 
+### Features Covered
+
+#### Core Features
+
+    ✔ CRUD operations for events
+    ✔ CRUD operations for attendees
+    ✔ Registration system with constraints
+    ✔ Prevent exceeding max_attendees
+    ✔ Avoid duplicate registrations for the same event
+    ✔ Filter events by date
+    ✔ Search attendees by name or email
+
+#### Advanced Features
+
+    - Caching:
+        ✔ Cache frequently accessed data (e.g., event details, attendee lists)
+        ✔ Invalidate cache for updates or deletions
+
+    - Background Jobs with Worker Threads:
+        ✔ Send confirmation emails after registration
+        ✔ Use worker threads for asynchronous tasks
+
+    -  Scheduling:
+        ✔ Send event reminders 24 hours before an event
+        ✔ Use task schedulers like @nestjs/schedule
+
+    -  Notifications:
+        ✔ Implement email notifications using Nodemailer
+        ✔ Create templates for registration confirmation and event reminders
+
+    -  Real-time Updates:
+        ✔ Notify attendees when new events are created
+        ✔ Alert attendees when event spots are nearly full in my cause less than or equal to 2.
+
 ## Tech Stack
 
-- **Backend**: Node.js, NestJS
-- **ORM**:Typeorm
-- **API Documentation**: Swagger
+- **Backend**: Node.js (v22.11.0), NestJS (v10.4.15)
+- **ORM**: TypeORM
+- **Real-Time Notifications**: WebSockets
+- **Caching**: Redis
+- **Task Scheduling**: NestJS Scheduler
 - **Database**: PostgreSQL
 - **Containerization**: Docker, Docker Compose
+- **API Documentation**: Swagger
 
 ---
 
 ## Project Structure
 
 ```
-e-commerce-api/
+event-management-system/
+│   ├── .vscode/
 │   ├── sql/
 │   ├── src/
 │   ├── test/
@@ -61,8 +104,8 @@ e-commerce-api/
 2. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/mobin-ism/E-Commerce-API.git
-    cd E-Commerce-API
+    git clone https://github.com/mobin-ism/event-management-system.git
+    cd event-management-system
     ```
 
 3. **Build and run the application**:
@@ -73,18 +116,20 @@ e-commerce-api/
 
 4. **Database Creation**:
 
-    - If you see `Unable to connect to the database` error, then you need to create a database manually by any datbase client or using your terminal.
-      Please make sure that you are using exactly identical database credentials like showing below while creating the database:
+    If you encounter the error `Unable to connect to the database`, you may need to create the database manually using any database client or via the terminal.
+
+    Ensure that you use the exact same database credentials as shown below when creating the database:
 
     ```bash
-    DB_HOST=postgres
+    DB_HOST=localhost
     DB_PORT=5432
     DB_USERNAME=postgres
     DB_PASSWORD=pLSkczmWBHK0CVh
-    DB_NAME=e-commerce-api
+    DB_NAME=event-management
+
     ```
 
-5. **Access the application**:
+5. **Access the API Documentation**:
     - **API**: [http://localhost:3000/docs](http://localhost:3000/docs)
 
 ---
@@ -96,12 +141,13 @@ e-commerce-api/
     - Node.js (v22.11.0)
     - Yarn (v1.22.22)
     - PostgreSQL
+    - Redis
 
 2. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/mobin-ism/E-Commerce-API.git
-    cd E-Commerce-API
+    git clone https://github.com/mobin-ism/event-management-system.git
+    cd event-management-system
     ```
 
 3. **Set up environment variables**:
@@ -109,13 +155,11 @@ e-commerce-api/
 
 4. **Install dependencies and run services**:
 
-```bash
-    yarn
-    yarn build
-    yarn start:prod
-```
+    ```bash
+    yarn && yarn build && yarn start:prod
+    ```
 
-5. **Access the application**:
+5. **Access the API Documentation**:
     - **API Documentation**: [http://localhost:3000/docs](http://localhost:3000/docs)
 
 ---
@@ -132,14 +176,25 @@ APP_PORT=3000
 APP_URL=http://localhost:3000
 
 # DEVELOPMENT ENVIRONMENT
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=password
-DB_NAME=e-commerce-api
+DB_HOST=YOUR_DB_HOST
+DB_PORT=YOUR_DB_PORT
+DB_USERNAME=YOUR_POSTGRES_USERNAME
+DB_PASSWORD=YOUR_POSTGRES_PASSWORD
+DB_NAME=YOUR_POSTGRES_DB_NAME
+
+#SMTP CONFIG
+SMTP_HOST=YOUR_SMTP_HOST
+SMTP_USER=YOUR_SMTP_USER
+SMTP_PASSWORD=YOUR_SMTP_PASSWORD
+SMTP_MAIL_FROM=YOUR_EMAIL
+SMTP_PORT=YOUR_SMTP_PORT
+
+# REDIS CONFIG
+REDIS_HOST=YOUR_REDIS_HOST
+REDIS_PORT=YOUR_REDIS_PORT
+TTL=3600 #SECONDS
 
 #MISC
-DEFAULT_PAGE_SIZE=25
 RATE_LIMITER_TIME_TO_LEAVE=6000 #MILLISECONDS
 RATE_LIMITER_MAX_TRY=60
 ```
@@ -151,118 +206,117 @@ RATE_LIMITER_MAX_TRY=60
 You can see the API documentation in Swagger, If you follow the local deployment.
 Go to [http://localhost:3000/docs/](http://localhost:3000/docs/)
 
-### Product Mangement API
+### Event Mangement API
 
-- `GET /api/v1/product`: Retrieve all product with pagination and product searching and filtering with category.
-- `GET /api/v1/product/:id`: Retrieve a specific product.
-- `POST /api/v1/product`: Create a new task.
-- `PATCH /api/v1/product/:id`: Update a task.
-- `DELETE /api/v1/product/:id`: Delete a task.
+- `GET /api/v1/event`: Retrieve all events with attendee information.
+- `GET /api/v1/event/date-range`: Retrieve all events in a specific date range with attendee information.
+- `GET /api/v1/event/:id`: Retrieve a specific event.
+- `POST /api/v1/event`: Create a new event.
+- `PATCH /api/v1/event/:id`: Update an event.
+- `DELETE /api/v1/event/:id`: Delete an event.
 
-### Category Management API
+### Attendee Management API
 
-- `GET /api/v1/category`: Retrieve all categories.
-- `GET /api/v1/category/:id`: Retrieve a specific categories.
-- `POST /api/v1/category`: Create a new category.
-- `PATCH /api/v1/category/:id`: Update a category.
-- `DELETE /api/v1/category/:id`: Delete a category.
+- `GET /api/v1/attendee`: Retrieve all attendees with name and email filteration.
+- `GET /api/v1/attendee/:id`: Retrieve a specific attendee.
+- `POST /api/v1/attendee`: Create a new attendee.
+- `PATCH /api/v1/attendee/:id`: Update a attendee.
+- `DELETE /api/v1/attendee/:id`: Delete a attendee.
 
-### Order Management API
+### Registration Management API
 
-- `GET /api/v1/order`: Retrieve all orders with pagination.
-- `GET /api/v1/order/:id`: Retrieve a specific orders.
-- `POST /api/v1/order`: Create a new order.
-- `PATCH /api/v1/order/:id`: Update a order.
-- `DELETE /api/v1/order/:id`: Delete a order.
+- `GET /api/v1/registration`: Retrieve all registration with pagination.
+- `GET /api/v1/registration/:id`: Retrieve a specific order.
+- `POST /api/v1/registration`: Create a new order.
+- `DELETE /api/v1/registration/:id`: Canceling an order.
 
 ---
 
 ## Database Schema
 
-### **Category**
+### **Event**
 
-The `Category` entity is used to define product categories.
+The `Event` entity is used to define events, including their name, description, date, location, and max attendees.
 
-| Column Name   | Data Type      | Constraints              | Description                                   |
-| ------------- | -------------- | ------------------------ | --------------------------------------------- |
-| `id`          | `uuid`         | Primary Key              | Unique identifier for each category.          |
-| `name`        | `varchar(255)` | Not Null                 | Name of the category.                         |
-| `description` | `text`         | Nullable                 | Optional description of the category.         |
-| `createdAt`   | `timestamp`    | Not Null, Auto-Generated | Timestamp when the category was created.      |
-| `updatedAt`   | `timestamp`    | Not Null, Auto-Generated | Timestamp when the category was last updated. |
+| Column Name    | Data Type      | Constraints              | Description                                |
+| -------------- | -------------- | ------------------------ | ------------------------------------------ |
+| `id`           | `uuid`         | Primary Key              | Unique identifier for each event.          |
+| `name`         | `varchar(255)` | Not Null                 | Name of the event.                         |
+| `description`  | `text`         | Nullable                 | Optional description of the event.         |
+| `date`         | `date`         | Not Null                 | The date of the event (no time).           |
+| `location`     | `varchar(255)` | Nullable                 | Location of the event.                     |
+| `maxAttendees` | `int`          | Not Null, Default: 1     | Maximum number of attendees for the event. |
+| `createdAt`    | `timestamp`    | Not Null, Auto-Generated | Timestamp when the event was created.      |
+| `updatedAt`    | `timestamp`    | Not Null, Auto-Generated | Timestamp when the event was last updated. |
 
-#### Relationships:
+### **Indexes & Constraints**
 
-- **One-to-Many with `Product`:**  
-  A category can have many products associated with it. If a product is created, updated, or deleted, cascading changes are applied to the `products` relationship.
+- **Unique Constraint:** (`location`, `date`) — Ensures that each event has a unique combination of location and date.
+- **Index:** (`location`, `date`) — Improves query performance for filtering events by location and date.
 
----
+### **Relations**
 
-### **Product**
-
-The `Product` entity represents individual products belonging to a `Category`.
-
-| Column Name   | Data Type        | Constraints              | Description                                     |
-| ------------- | ---------------- | ------------------------ | ----------------------------------------------- |
-| `id`          | `uuid`           | Primary Key              | Unique identifier for each product.             |
-| `name`        | `varchar(255)`   | Not Null                 | Name of the product.                            |
-| `description` | `text`           | Nullable                 | Optional description of the product.            |
-| `price`       | `decimal(10, 2)` | Nullable, Default: 0     | Price of the product.                           |
-| `quantity`    | `int`            | Nullable, Default: 0     | Available quantity of the product.              |
-| `categoryId`  | `string`         | Nullable                 | Foreign key reference to the `Category` entity. |
-| `createdAt`   | `timestamp`      | Not Null, Auto-Generated | Timestamp when the product was created.         |
-| `updatedAt`   | `timestamp`      | Not Null, Auto-Generated | Timestamp when the product was last updated.    |
-
-#### Relationships:
-
-- **Many-to-One with `Category`:**  
-  Each product belongs to one category. If a category is deleted, all associated products are also deleted due to the `CASCADE` rule.
-
-- **One-to-Many with `OrderedProduct`:**  
-  A product can be part of many orders. Cascading changes apply to the `orderedProducts` relationship.
+- **One-to-Many with `Registration`:**
+    - The `Event` entity has a one-to-many relationship with the `Registration` entity.
+    - A single event can have many registrations (attendees).
+    - The `Registration` entity has a foreign key to the `Event` entity.
 
 ---
 
-### **Order**
+### **Attendee**
 
-The `Order` entity represents customer orders.
+The `Attendee` entity is used to define event attendees, including their name, email, and their relation to the `Registration` entity.
 
-| Column Name     | Data Type        | Constraints                  | Description                                       |
-| --------------- | ---------------- | ---------------------------- | ------------------------------------------------- |
-| `id`            | `uuid`           | Primary Key                  | Unique identifier for each order.                 |
-| `customerName`  | `varchar(100)`   | Not Null                     | Name of the customer who placed the order.        |
-| `customerEmail` | `varchar(100)`   | Not Null                     | Email of the customer.                            |
-| `status`        | `enum`           | Not Null, Default: `PENDING` | Status of the order (`PENDING`, `SHIPPED`, etc.). |
-| `totalPrice`    | `decimal(10, 2)` | Nullable, Default: 0         | Total price of the order.                         |
-| `createdAt`     | `timestamp`      | Not Null, Auto-Generated     | Timestamp when the order was created.             |
-| `updatedAt`     | `timestamp`      | Not Null, Auto-Generated     | Timestamp when the order was last updated.        |
+| Column Name | Data Type      | Constraints              | Description                                   |
+| ----------- | -------------- | ------------------------ | --------------------------------------------- |
+| `id`        | `uuid`         | Primary Key              | Unique identifier for each attendee.          |
+| `name`      | `varchar(100)` | Not Null                 | Name of the attendee.                         |
+| `email`     | `varchar(100)` | Not Null, Unique         | Email address of the attendee (unique).       |
+| `createdAt` | `timestamp`    | Not Null, Auto-Generated | Timestamp when the attendee was created.      |
+| `updatedAt` | `timestamp`    | Not Null, Auto-Generated | Timestamp when the attendee was last updated. |
 
-#### Relationships:
+### **Relations**
 
-- **One-to-Many with `OrderedProduct`:**  
-  An order can contain many products. Cascading changes apply to the `orderedProducts` relationship.
+- **One-to-Many with `Registration`:**
+    - The `Attendee` entity has a one-to-many relationship with the `Registration` entity.
+    - A single attendee can have multiple registrations (one for each event they attend).
+    - The `Registration` entity has a foreign key to the `Attendee` entity.
+
+### **Indexes & Constraints**
+
+- **Unique Constraint:** `email` — Ensures that each attendee's email address is unique.
+- **Index:** (`name`, `email`) — Improves query performance for searching attendees by name and email.
 
 ---
 
-### **OrderedProduct**
+### **Registration**
 
-The `OrderedProduct` entity represents products included in customer orders.
+The `Registration` entity is used to store the registration details for an attendee to a particular event.
 
-| Column Name | Data Type   | Constraints              | Description                                        |
-| ----------- | ----------- | ------------------------ | -------------------------------------------------- |
-| `id`        | `uuid`      | Primary Key              | Unique identifier for each ordered product record. |
-| `quantity`  | `int`       | Nullable, Default: 0     | Quantity of the product in the order.              |
-| `orderId`   | `string`    | Not Null                 | Foreign key reference to the `Order` entity.       |
-| `productId` | `string`    | Not Null                 | Foreign key reference to the `Product` entity.     |
-| `createdAt` | `timestamp` | Not Null, Auto-Generated | Timestamp when the record was created.             |
-| `updatedAt` | `timestamp` | Not Null, Auto-Generated | Timestamp when the record was last updated.        |
+| Column Name    | Data Type   | Constraints              | Description                                              |
+| -------------- | ----------- | ------------------------ | -------------------------------------------------------- |
+| `id`           | `uuid`      | Primary Key              | Unique identifier for each registration.                 |
+| `eventId`      | `uuid`      | Not Null, Foreign Key    | The ID of the event to which the attendee is registered. |
+| `attendeeId`   | `uuid`      | Not Null, Foreign Key    | The ID of the attendee who is registered.                |
+| `registeredAt` | `date`      | Not Null                 | The date when the attendee registered for the event.     |
+| `createdAt`    | `timestamp` | Not Null, Auto-Generated | Timestamp when the registration was created.             |
+| `updatedAt`    | `timestamp` | Not Null, Auto-Generated | Timestamp when the registration was last updated.        |
 
-#### Relationships:
+### **Relations**
 
-- **Many-to-One with `Order`:**  
-  Each ordered product belongs to one order. If an order is deleted, all associated `OrderedProduct` records are also deleted due to the `CASCADE` rule.
+- **Many-to-One with `Event`:**
 
-- **Many-to-One with `Product`:**  
-  Each ordered product is linked to one product. If a product is deleted, all associated `OrderedProduct` records are also deleted due to the `CASCADE` rule.
+    - The `Registration` entity has a many-to-one relationship with the `Event` entity.
+    - Each registration belongs to a single event.
+    - The `Event` entity has a one-to-many relationship with `Registration`.
+
+- **Many-to-One with `Attendee`:**
+    - The `Registration` entity has a many-to-one relationship with the `Attendee` entity.
+    - Each registration belongs to a single attendee.
+    - The `Attendee` entity has a one-to-many relationship with `Registration`.
+
+### **Indexes & Constraints**
+
+- **On Delete Cascade:** If an event or attendee is deleted, all corresponding registrations are also deleted automatically.
 
 ---
