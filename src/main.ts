@@ -37,7 +37,7 @@ async function bootstrap() {
 
     // SWAGGER CONFIGURATION
     SwaggerModule.setup(
-        'docs',
+        'api-docs',
         app,
         SwaggerModule.createDocument(app, swaggerConfig)
     )
