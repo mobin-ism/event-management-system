@@ -96,7 +96,7 @@ event-management-system/
 
 ## Setup and Installation
 
-### Docker Deployment
+### 🐋 Docker Deployment
 
 1. **Docker**:
    Ensure Docker and Docker Compose are installed on your machine.
