@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Between, Repository } from 'typeorm'
+import { WebsocketGateway } from '../websocket/websocket.gateway'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { Event } from './entities/event.entity'
@@ -28,7 +29,8 @@ export class EventService {
         @InjectRepository(Event)
         private readonly eventRepository: Repository<Event>,
         private readonly eventCacheService: EventCacheService,
-        private readonly eventEmitter: EventEmitter2
+        private readonly eventEmitter: EventEmitter2,
+        private readonly webSocketGateway: WebsocketGateway
     ) {}
 
     /**
@@ -42,6 +44,11 @@ export class EventService {
             const createdEvent = await this.eventRepository.save(event)
             // Add the created event to the cache
             this.eventCacheService.create(createdEvent)
+            // Notify the clients
+            this.webSocketGateway.server.emit(
+                'new-event',
+                `New event has been organized: ${createdEvent.name}`
+            )
             return createdEvent
         } catch (error) {
             this.logger.error(error.message)

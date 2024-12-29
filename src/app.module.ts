@@ -14,6 +14,7 @@ import { AttendeeModule } from './modules/attendee/attendee.module'
 import { EventModule } from './modules/event/event.module'
 import { MailModule } from './modules/mail/mail.module'
 import { RegistrationModule } from './modules/registration/registration.module'
+import { WebsocketModule } from './modules/websocket/websocket.module'
 @Module({
     imports: [
         CacheModule.register(CACHE_CONFIG),
@@ -25,7 +26,8 @@ import { RegistrationModule } from './modules/registration/registration.module'
         EventModule,
         AttendeeModule,
         RegistrationModule,
-        MailModule
+        MailModule,
+        WebsocketModule
     ],
     exports: [TypeOrmModule]
 })
