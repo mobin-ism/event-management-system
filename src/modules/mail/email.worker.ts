@@ -2,7 +2,7 @@ import * as fs from 'fs/promises'
 import * as handlebars from 'handlebars'
 import { createTransport, Transporter } from 'nodemailer'
 import * as path from 'path'
-import { parentPort } from 'worker_threads'
+import { parentPort, workerData } from 'worker_threads'
 
 class EmailWorker {
     private transporter: Transporter
@@ -27,17 +27,17 @@ class EmailWorker {
         return handlebars.compile(templateContent)
     }
 
-    async sendEmail(templateName: string, userData: any) {
+    async sendEmail(templateName: string, data: any) {
         try {
             // Get and compile template
             const template = await this.getTemplate(templateName)
-            const html = template(userData)
+            const html = template(data)
 
             // Send email
             const result = await this.transporter.sendMail({
-                from: 'almobin777@gmail.com',
-                to: 'mobin@anchorblock.vc',
-                subject: 'Hello world',
+                from: process.env.SMTP_MAIL_FROM,
+                to: data.useremail,
+                subject: 'Registration Confirmation',
                 html
             })
 
@@ -56,16 +56,11 @@ class EmailWorker {
 }
 
 async function processEmailInWorker() {
-    // const { templateName, userData } = workerData
-    const templateName = 'registration-confirmation'
-    const userData = {
-        email: 'mobin@anchorblock.vc',
-        name: 'Al Mobin'
-    }
+    const { template, data } = workerData
     const emailWorker = new EmailWorker()
 
     try {
-        const result = await emailWorker.sendEmail(templateName, userData)
+        const result = await emailWorker.sendEmail(template, data)
         parentPort.postMessage(result)
     } catch (error) {
         parentPort.postMessage({

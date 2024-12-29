@@ -1,15 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { OnEvent } from '@nestjs/event-emitter'
+import { join } from 'path'
 import { Worker } from 'worker_threads'
-import { join } from 'path';
+import { Registration } from '../registration/entities/registration.entity'
 @Injectable()
 export class MailService {
     private readonly logger = new Logger(MailService.name)
     @OnEvent('registration-confirmation')
-    async sendEmail(templateName: string, userData: any): Promise<void> {
+    async sendRegistrationConfirmationEmail(
+        registrationData: Registration
+    ): Promise<void> {
+        const data = {
+            username: registrationData.attendee.name,
+            useremail: registrationData.attendee.email,
+            emailBody: `Hello ${registrationData.attendee.name}, your registration for ${registrationData.event.name} is confirmed!`
+        }
         return new Promise((resolve, reject) => {
             const worker = new Worker(join(__dirname, 'email.worker.js'), {
-                workerData: { templateName, userData }
+                workerData: {
+                    template: 'registration-confirmation',
+                    data: data
+                }
             })
 
             worker.on('message', (message) => {
