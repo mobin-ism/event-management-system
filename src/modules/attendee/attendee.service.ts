@@ -6,9 +6,8 @@ import {
     NotFoundException
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { isArray } from 'class-validator'
 import { Repository } from 'typeorm'
-import { CacheService } from '../cache/cache.service'
+import { AttendeeCacheService } from './attendee-cache.service'
 import { CreateAttendeeDto } from './dto/create-attendee.dto'
 import { UpdateAttendeeDto } from './dto/update-attendee.dto'
 import { Attendee } from './entities/attendee.entity'
@@ -16,13 +15,10 @@ import { Attendee } from './entities/attendee.entity'
 @Injectable()
 export class AttendeeService {
     private readonly logger = new Logger(AttendeeService.name)
-    private readonly CACHE_KEY = 'attendees'
-    private readonly CACHE_PREFIX = 'attendee:'
-    private readonly CACHE_TTL = parseInt(process.env.TTL) // 1 hour in seconds
     constructor(
         @InjectRepository(Attendee)
         private readonly attendeeRepository: Repository<Attendee>,
-        private readonly cacheService: CacheService
+        private readonly attendeeCacheService: AttendeeCacheService
     ) {}
 
     /**
@@ -34,13 +30,8 @@ export class AttendeeService {
         try {
             const attendee = this.attendeeRepository.create(createAttendeeDto)
             const createdAttendee = await this.attendeeRepository.save(attendee)
-            // Add the created item to the cache
-            this.cacheService.addItemToList(this.CACHE_KEY, createdAttendee)
-            this.cacheService.setItem(
-                `${this.CACHE_PREFIX}${createdAttendee.id}`,
-                createdAttendee,
-                this.CACHE_TTL
-            )
+            // Add the created attendee to the cache
+            this.attendeeCacheService.create(createdAttendee)
             return createdAttendee
         } catch (error) {
             this.logger.error(error.message)
@@ -59,18 +50,21 @@ export class AttendeeService {
      */
     async findAll() {
         // Try cache first
-        const cachedAttendees = await this.cacheService.getList<Attendee>(
-            this.CACHE_KEY
-        )
+        const cachedAttendees = await this.attendeeCacheService.findAll()
         if (cachedAttendees.length > 0) {
             return cachedAttendees
         }
-        const attendees = await this.attendeeRepository.find()
-        await this.cacheService.setList(
-            this.CACHE_KEY,
-            attendees,
-            this.CACHE_TTL
-        )
+        const attendees = await this.attendeeRepository.find({
+            relations: {
+                eventAttendees: {
+                    event: true
+                }
+            }
+        })
+
+        // Set the attendees in the cache
+        this.attendeeCacheService.setAll(attendees)
+
         return attendees
     }
 
@@ -98,12 +92,7 @@ export class AttendeeService {
      */
     async findOne(id: string) {
         // Try cache first
-        const cachedAttendee = await this.cacheService.getItem<Attendee>(
-            `${this.CACHE_PREFIX}${id}`
-        )
-        if (cachedAttendee) {
-            return isArray(cachedAttendee) ? cachedAttendee[0] : cachedAttendee
-        }
+        const cachedAttendee = await this.attendeeCacheService.findOne(id)
 
         // If not in cache, get from database
         const attendee = await this.attendeeRepository.findOne({
@@ -115,13 +104,7 @@ export class AttendeeService {
         }
 
         // Add the attendee to the cache
-        this.cacheService.addItemToList(`${this.CACHE_PREFIX}${id}`, attendee)
-        // Set the attendee in the cache
-        this.cacheService.setItem(
-            `${this.CACHE_PREFIX}${id}`,
-            attendee,
-            this.CACHE_TTL
-        )
+        this.attendeeCacheService.setOne(attendee)
 
         return attendee
     }
@@ -141,15 +124,7 @@ export class AttendeeService {
             const updatedAttendee = await this.attendeeRepository.save(attendee)
 
             //Update the attendee in the cache
-            this.cacheService.updateItemInList(this.CACHE_KEY, updatedAttendee)
-            // Delete the attendee from the cache
-            this.cacheService.delete(`${this.CACHE_PREFIX}${id}`)
-            // Update the attendee in the cache
-            this.cacheService.setItem(
-                `${this.CACHE_PREFIX}${id}`,
-                updatedAttendee,
-                this.CACHE_TTL
-            )
+            this.attendeeCacheService.update(updatedAttendee)
 
             return updatedAttendee
         } catch (error) {
@@ -172,13 +147,10 @@ export class AttendeeService {
         const attendee = await this.findOne(id)
         try {
             await this.attendeeRepository.delete(attendee.id)
-            // Remove the attendee from the cache list
-            this.cacheService.removeItemFromList<Attendee>(
-                this.CACHE_KEY,
-                attendee.id
-            )
+
             // Remove the attendee from the cache
-            this.cacheService.delete(`${this.CACHE_PREFIX}${id}`)
+            this.attendeeCacheService.remove(attendee)
+
             return attendee
         } catch (error) {
             this.logger.error(error.message)

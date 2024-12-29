@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpStatus, Param, Post } from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpStatus,
+    Param,
+    Post
+} from '@nestjs/common'
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { CreateRegistrationDto } from './dto/create-registration.dto'
 import { RegistrationService } from './registration.service'
@@ -50,6 +58,24 @@ export class RegistrationController {
             statusCode: HttpStatus.OK,
             message: 'Registration found',
             result: await this.registrationService.findOne(id)
+        }
+    }
+
+    @Delete(':id')
+    @ApiOperation({ summary: 'Canceling an Registration' })
+    @ApiResponse({
+        description: 'Registration canceled',
+        status: HttpStatus.OK
+    })
+    @ApiResponse({
+        description: 'Registration not found',
+        status: HttpStatus.NOT_FOUND
+    })
+    async remove(@Param('id') id: string) {
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Registration canceled',
+            result: await this.registrationService.remove(id)
         }
     }
 }

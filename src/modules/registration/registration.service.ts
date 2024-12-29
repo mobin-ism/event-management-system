@@ -1,18 +1,22 @@
-import { HttpException, Injectable } from '@nestjs/common'
+import { HttpException, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { isArray } from 'class-validator'
 import { Repository } from 'typeorm'
 import { AttendeeService } from '../attendee/attendee.service'
 import { EventService } from '../event/event.service'
 import { CreateRegistrationDto } from './dto/create-registration.dto'
 import { Registration } from './entities/registration.entity'
+import { RegistrationCacheService } from './registration-cache.service'
 
 @Injectable()
 export class RegistrationService {
+    private readonly logger = new Logger(RegistrationService.name)
     constructor(
         @InjectRepository(Registration)
         private registrationRepository: Repository<Registration>,
         private readonly eventService: EventService,
-        private readonly attendeeService: AttendeeService
+        private readonly attendeeService: AttendeeService,
+        private readonly registrationCacheService: RegistrationCacheService
     ) {}
 
     /**
@@ -47,7 +51,12 @@ export class RegistrationService {
                 attendee
             })
             registration.registeredAt = new Date()
-            return await this.registrationRepository.save(registration)
+            const createdRegistration =
+                await this.registrationRepository.save(registration)
+
+            // Add the created registraion to the cache
+            this.registrationCacheService.create(createdRegistration)
+            return createdRegistration
         } catch (error) {
             throw new HttpException(error.message, 400)
         }
@@ -58,7 +67,23 @@ export class RegistrationService {
      * @returns
      */
     async findAll() {
-        return await this.registrationRepository.find()
+        // Try cache first
+        const cachedRegistrations =
+            await this.registrationCacheService.findAll()
+        if (cachedRegistrations.length > 0) {
+            return cachedRegistrations
+        }
+
+        // If not in cache, get from database
+        const registraions = await this.registrationRepository.find({
+            relations: {
+                event: true,
+                attendee: true
+            }
+        })
+        // Set the registraions in the cache
+        this.registrationCacheService.setAll(registraions)
+        return registraions
     }
 
     /**
@@ -67,13 +92,26 @@ export class RegistrationService {
      * @returns
      */
     async findOne(id: string) {
-        return await this.registrationRepository.findOne({
+        // Try cache first
+        const cachedRegistraion =
+            await this.registrationCacheService.findOne(id)
+        if (cachedRegistraion) {
+            return isArray(cachedRegistraion)
+                ? cachedRegistraion[0]
+                : cachedRegistraion
+        }
+        const registration = await this.registrationRepository.findOne({
             where: { id },
             relations: {
                 event: true,
                 attendee: true
             }
         })
+
+        // Add the registration to the cache
+        this.registrationCacheService.setOne(registration)
+
+        return registration
     }
 
     /**
@@ -83,5 +121,22 @@ export class RegistrationService {
         return await this.registrationRepository.findOne({
             where: { eventId, attendeeId }
         })
+    }
+
+    /**
+     * CANCEL REGISTRATION
+     * @param id
+     * @returns
+     */
+    async remove(id: string) {
+        const registration = await this.findOne(id)
+        try {
+            await this.registrationRepository.remove(registration)
+            // Remove the registration from the cache
+            this.registrationCacheService.remove(registration)
+            return registration
+        } catch (error) {
+            throw new HttpException(error.message, 400)
+        }
     }
 }

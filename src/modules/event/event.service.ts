@@ -6,19 +6,15 @@ import {
     NotFoundException
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { isArray } from 'class-validator'
 import { Between, Repository } from 'typeorm'
-import { CacheService } from '../cache/cache.service'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { Event } from './entities/event.entity'
+import { EventCacheService } from './event-cache.service'
 
 @Injectable()
 export class EventService {
     private logger = new Logger(EventService.name)
-    private readonly CACHE_KEY = 'events'
-    private readonly CACHE_PREFIX = 'event:'
-    private readonly CACHE_TTL = parseInt(process.env.TTL) // 1 hour in seconds
 
     /**
      * Constructor
@@ -29,7 +25,7 @@ export class EventService {
         // Inject the EventRepository
         @InjectRepository(Event)
         private readonly eventRepository: Repository<Event>,
-        private readonly cacheService: CacheService
+        private readonly eventCacheService: EventCacheService
     ) {}
 
     /**
@@ -42,12 +38,7 @@ export class EventService {
             const event = this.eventRepository.create(createEventDto)
             const createdEvent = await this.eventRepository.save(event)
             // Add the created event to the cache
-            this.cacheService.addItemToList(this.CACHE_KEY, createdEvent)
-            this.cacheService.setItem(
-                `${this.CACHE_PREFIX}${createdEvent.id}`,
-                createdEvent,
-                this.CACHE_TTL
-            )
+            this.eventCacheService.create(createdEvent)
             return createdEvent
         } catch (error) {
             this.logger.error(error.message)
@@ -66,9 +57,7 @@ export class EventService {
      */
     async findAll() {
         // Try cache first
-        const cachedEvents = await this.cacheService.getList<Event>(
-            this.CACHE_KEY
-        )
+        const cachedEvents = await this.eventCacheService.findAll()
         if (cachedEvents.length > 0) {
             return cachedEvents
         }
@@ -79,7 +68,8 @@ export class EventService {
                 eventAttendees: true
             }
         })
-        await this.cacheService.setList(this.CACHE_KEY, events, this.CACHE_TTL)
+        // Set the events in the cache
+        this.eventCacheService.setAll(events)
         return events
     }
 
@@ -90,13 +80,10 @@ export class EventService {
      */
     async findOne(id: string) {
         // Try cache first
-        const cachedEvent = await this.cacheService.getItem<Event>(
-            `${this.CACHE_PREFIX}${id}`
-        )
+        const cachedEvent = await this.eventCacheService.findOne(id)
         if (cachedEvent) {
-            return isArray(cachedEvent) ? cachedEvent[0] : cachedEvent
+            return cachedEvent
         }
-
         const event = await this.eventRepository.findOne({
             where: { id },
             relations: {
@@ -107,14 +94,9 @@ export class EventService {
         if (!event) {
             throw new NotFoundException(`Event with ID ${id} not found`)
         }
+
         // Add the event to the cache
-        this.cacheService.addItemToList(`${this.CACHE_PREFIX}${id}`, event)
-        // Set the event in the cache
-        this.cacheService.setItem(
-            `${this.CACHE_PREFIX}${id}`,
-            event,
-            this.CACHE_TTL
-        )
+        this.eventCacheService.setOne(event)
         return event
     }
 
@@ -134,16 +116,9 @@ export class EventService {
         try {
             const updatedEvent = await this.eventRepository.save(event)
 
-            //Update the event in the cache
-            this.cacheService.updateItemInList(this.CACHE_KEY, updatedEvent)
-            // Delete the event from the cache
-            this.cacheService.delete(`${this.CACHE_PREFIX}${id}`)
             // Update the event in the cache
-            this.cacheService.setItem(
-                `${this.CACHE_PREFIX}${id}`,
-                updatedEvent,
-                this.CACHE_TTL
-            )
+            this.eventCacheService.update(updatedEvent)
+
             return updatedEvent
         } catch (error) {
             this.logger.error(error.message)
@@ -166,12 +141,7 @@ export class EventService {
         try {
             await this.eventRepository.delete(event.id)
             // Remove the event from the cache
-            this.cacheService.removeItemFromList<Event>(
-                this.CACHE_KEY,
-                event.id
-            )
-            // Remove the event from the cache
-            this.cacheService.delete(`${this.CACHE_PREFIX}${id}`)
+            this.eventCacheService.remove(event)
             return event
         } catch (error) {
             this.logger.error(error.message)
