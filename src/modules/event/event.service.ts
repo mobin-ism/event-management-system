@@ -168,15 +168,6 @@ export class EventService {
      */
     async isEventFull(eventId: string) {
         const event = await this.findOne(eventId)
-        if (event && event.eventAttendees && event.eventAttendees.length) {
-            const availableSeats =
-                event.maxAttendees - event.eventAttendees.length
-            // Notify the clients
-            this.webSocketGateway.server.emit(
-                'event-availability',
-                `Heads up! Seat is going to fill up for: ${event.name}. Only ${availableSeats - 1} is remaining`
-            )
-        }
         return (
             event.eventAttendees &&
             event.eventAttendees.length >= event.maxAttendees

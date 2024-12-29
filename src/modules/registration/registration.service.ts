@@ -5,6 +5,7 @@ import { isArray } from 'class-validator'
 import { Repository } from 'typeorm'
 import { AttendeeService } from '../attendee/attendee.service'
 import { EventService } from '../event/event.service'
+import { WebsocketGateway } from '../websocket/websocket.gateway'
 import { CreateRegistrationDto } from './dto/create-registration.dto'
 import { Registration } from './entities/registration.entity'
 import { RegistrationCacheService } from './registration-cache.service'
@@ -18,7 +19,8 @@ export class RegistrationService {
         private readonly eventService: EventService,
         private readonly attendeeService: AttendeeService,
         private readonly registrationCacheService: RegistrationCacheService,
-        private eventEmitter: EventEmitter2
+        private eventEmitter: EventEmitter2,
+        private readonly webSocketGateway: WebsocketGateway
     ) {}
 
     /**
@@ -56,14 +58,18 @@ export class RegistrationService {
             const createdRegistration =
                 await this.registrationRepository.save(registration)
             // Add the created registraion to the cache
-            this.registrationCacheService.create(createdRegistration)
+            await this.registrationCacheService.create(createdRegistration)
             // Update the event cache to the attendee and add the attendee to the event
-            this.eventService.updateEventAttendees(eventId)
-            this.attendeeService.updateAttendeesInEvent(attendeeId)
+            await this.eventService.updateEventAttendees(eventId)
+            await this.attendeeService.updateAttendeesInEvent(attendeeId)
+            // Notify the clients about the new registration
             this.eventEmitter.emit(
                 'registration-confirmation',
                 createdRegistration
             )
+            // Notify the clients about the limited space
+            await this.notifyClients(eventId)
+
             return createdRegistration
         } catch (error) {
             throw new HttpException(error.message, 400)
@@ -145,6 +151,21 @@ export class RegistrationService {
             return registration
         } catch (error) {
             throw new HttpException(error.message, 400)
+        }
+    }
+
+    /**
+     * Notify the clients about the limited space
+     * @param event
+     */
+    private async notifyClients(eventId: string) {
+        const event = await this.eventService.findOne(eventId)
+        const availableSpace = event.maxAttendees - event.eventAttendees.length
+        if (availableSpace <= 2) {
+            this.webSocketGateway.server.emit(
+                'event-availability',
+                `Heads up! Seat is going to fill up for: ${event.name}. Only ${availableSpace} is remaining`
+            )
         }
     }
 }

@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { AttendeeModule } from '../attendee/attendee.module'
 import { CacheService } from '../cache/cache.service'
 import { EventModule } from '../event/event.module'
+import { WebsocketGateway } from '../websocket/websocket.gateway'
+import { WebsocketService } from '../websocket/websocket.service'
 import { Registration } from './entities/registration.entity'
 import { RegistrationCacheService } from './registration-cache.service'
 import { RegistrationController } from './registration.controller'
@@ -17,6 +19,12 @@ import { RegistrationService } from './registration.service'
         AttendeeModule
     ],
     controllers: [RegistrationController],
-    providers: [RegistrationService, CacheService, RegistrationCacheService]
+    providers: [
+        RegistrationService,
+        CacheService,
+        RegistrationCacheService,
+        WebsocketGateway,
+        WebsocketService
+    ]
 })
 export class RegistrationModule {}
